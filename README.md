@@ -1,3 +1,3 @@
 # Configurations
 
-* Adding vim (10/23/2021)
+* Finishing & adding vim configuration (10/24/21) 
