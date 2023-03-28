@@ -1,0 +1,50 @@
+# This is tailored to my system specs.
+# Prereqs: mips-linux-gnu-as - MIPS Assembler, mips-linux-gnu-gcc - MIPS GCC Compiler, qemu-mips - MIPS Emulator
+
+# This makefile deletes everything except, files with extentions other than ".o"
+# to exclude them, add the names to EXCLUDE_FILES.
+
+EXCLUDE_FILES := Makefile 
+# checks for file name.
+FILENAME := $(if $(filter clean,$(MAKECMDGOALS)),,$(basename $(filter-out $@,$(MAKECMDGOALS))))
+
+# flags
+AS := mips-linux-gnu-as
+CC := mips-linux-gnu-gcc
+ASFLAGS := -march=mips32 -mabi=32
+CFLAGS := $(ASFLAGS) -nostdlib -static
+
+# Check if filename is clean
+ifeq ($(FILENAME),clean)
+$(error Cannot use "clean" as filename.)
+endif
+
+# Targets
+.PHONY: all
+all: $(FILENAME)
+
+# Rule to build the executable from an assembly file
+$(FILENAME): $(FILENAME).o
+	$(CC) $(CFLAGS) -o $@ $<
+
+# Rule to build an object file from an assembly file
+$(FILENAME).o: $(FILENAME).asm
+	$(AS) $(ASFLAGS) -o $@ $<
+
+# Rule to run the executable in the qemu-mips emulator
+.PHONY: run
+run: $(FILENAME)
+	qemu-mips ./$<
+
+# Rule to clean up the project directory
+.PHONY: clean
+clean:
+	rm -f $(FILENAME) *.o
+	find . -type f ! \( -name "*.*" $(foreach file,$(EXCLUDE_FILES),-o -name "$(file)") \) -delete
+
+# Rule to set the filename variable to the specified value
+.PHONY: setfilename
+setfilename:
+	$(eval FILENAME := $(basename $(filter-out $@,$(MAKECMDGOALS))).asm)
+
+$(eval $(call add-goal,setfilename))
