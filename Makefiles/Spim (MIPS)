@@ -1,0 +1,46 @@
+# This is tailored to my system specs.
+# Prereqs: spim - MIPS Simulator
+
+# This makefile deletes everything except, files with extentions other than ".o"
+# to exclude them, add the names to EXCLUDE_FILES.
+
+EXCLUDE_FILES := Makefile 
+# checks for file name.
+FILENAME := $(if $(filter clean,$(MAKECMDGOALS)),,$(basename $(filter-out $@,$(MAKECMDGOALS))))
+
+# flags
+AS := spim
+CC := spim
+ASFLAGS := 
+CFLAGS := 
+
+# Check if filename is clean
+ifeq ($(FILENAME),clean)
+$(error Cannot use "clean" as filename.)
+endif
+
+# Targets
+.PHONY: all
+all: $(FILENAME)
+
+# Rule to build the executable from an assembly file
+$(FILENAME): $(FILENAME).asm
+	$(AS) $(ASFLAGS) -a $@ $<
+
+# Rule to run the executable in the spim MIPS simulator
+.PHONY: run
+run: $(FILENAME)
+	spim -quiet -file ./$<
+
+# Rule to clean up the project directory
+.PHONY: clean
+clean:
+	rm -f $(FILENAME) *.o
+	find . -type f ! \( -name "*.*" $(foreach file,$(EXCLUDE_FILES),-o -name "$(file)") \) -delete
+
+# Rule to set the filename variable to the specified value
+.PHONY: setfilename
+setfilename:
+	$(eval FILENAME := $(basename $(filter-out $@,$(MAKECMDGOALS))).asm)
+
+$(eval $(call add-goal,setfilename))
